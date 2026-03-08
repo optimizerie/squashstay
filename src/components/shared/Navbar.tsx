@@ -87,7 +87,7 @@ export function Navbar() {
           <span className="navbar-name">{profile?.full_name?.split(" ")[0]}</span>
         </button>
 
-        <button className="btn-ghost btn-sm" onClick={handleSignOut}>Sign out</button>
+        <button className="btn-ghost btn-sm" onClick={handleSignOut} style={{ whiteSpace: "nowrap" }}>Sign out</button>
       </div>
     </nav>
   );

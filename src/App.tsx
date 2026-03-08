@@ -217,13 +217,20 @@ function PendingApprovalScreen() {
           Your organizer account is awaiting approval from the SquashStay admin.
           You'll be able to create and manage tournaments once approved.
         </p>
-        <button
-          className="btn-ghost btn-sm"
-          style={{ marginTop: 24 }}
-          onClick={() => { if (user) refreshProfile(user.id); }}
-        >
-          Check again
-        </button>
+        <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 24 }}>
+          <button
+            className="btn-ghost btn-sm"
+            onClick={() => { if (user) refreshProfile(user.id); }}
+          >
+            Check again
+          </button>
+          <button
+            className="btn-ghost btn-sm"
+            onClick={() => supabase.auth.signOut().then(() => navigate("/"))}
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     </div>
   );

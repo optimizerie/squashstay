@@ -62,6 +62,12 @@ export function ResetPasswordPage() {
           >
             {loading ? "Saving…" : "Update Password"}
           </button>
+          <button
+            className="btn-ghost btn-full"
+            onClick={() => supabase.auth.signOut().then(() => navigate("/"))}
+          >
+            Sign out
+          </button>
         </div>
       </div>
     </div>
