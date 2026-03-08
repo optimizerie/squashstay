@@ -11,6 +11,7 @@ import { PlayerDashboard } from "./pages/PlayerDashboard";
 import { HostDashboard } from "./pages/HostDashboard";
 import { OrganizerDashboard } from "./pages/OrganizerDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { TournamentDetailPage } from "./pages/TournamentDetailPage";
 import { AssignmentDetailPage } from "./pages/AssignmentDetailPage";
 import { ProfilePage } from "./pages/ProfilePage";
@@ -43,6 +44,7 @@ type Route =
   | { page: "onboarding" }
   | { page: "dashboard" }
   | { page: "admin" }
+  | { page: "reset-password" }
   | { page: "tournament"; id: string }
   | { page: "assignment"; id: string }
   | { page: "profile" };
@@ -55,6 +57,7 @@ function parseRoute(): Route {
   if (hash === "/onboarding") return { page: "onboarding" };
   if (hash === "/dashboard") return { page: "dashboard" };
   if (hash === "/admin") return { page: "admin" };
+  if (hash === "/reset-password") return { page: "reset-password" };
   if (hash === "/profile") return { page: "profile" };
   const tmatch = hash.match(/^\/tournament\/(.+)/);
   if (tmatch) return { page: "tournament", id: tmatch[1] };
@@ -139,6 +142,8 @@ export default function App() {
 
   const renderPage = () => {
     if (loading || profileLoading) return <LoadingScreen />;
+
+    if (route.page === "reset-password") return <ResetPasswordPage />;
 
     if (!user) {
       if (route.page === "auth") return <AuthPage mode={route.mode} />;
