@@ -1,11 +1,19 @@
-// ProfilePage.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth, navigate } from "../App";
 import { Navbar } from "../components/shared/Navbar";
+import type { PlayerProfile, HostProfile, OrganizerProfile } from "../types";
 
 export function ProfilePage() {
   const { user, profile, refreshProfile } = useAuth();
+
+  // Role-specific data
+  const [playerProfile, setPlayerProfile] = useState<PlayerProfile | null>(null);
+  const [hostProfile, setHostProfile] = useState<HostProfile | null>(null);
+  const [organizerProfile, setOrganizerProfile] = useState<OrganizerProfile | null>(null);
+
+  // Edit form state
+  const [editing, setEditing] = useState(false);
   const [fullName, setFullName] = useState(profile?.full_name || "");
   const [bio, setBio] = useState(profile?.bio || "");
   const [nationality, setNationality] = useState(profile?.nationality || "");
@@ -15,6 +23,32 @@ export function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    if (!user || !profile) return;
+    if (profile.role === "player") {
+      supabase.from("player_profiles").select("*").eq("id", user.id).single()
+        .then(({ data }) => setPlayerProfile(data));
+    } else if (profile.role === "host") {
+      supabase.from("host_profiles").select("*").eq("id", user.id).single()
+        .then(({ data }) => setHostProfile(data));
+    } else if (profile.role === "organizer") {
+      supabase.from("organizer_profiles").select("*").eq("id", user.id).single()
+        .then(({ data }) => setOrganizerProfile(data));
+    }
+  }, [user, profile]);
+
+  // Sync edit fields when profile changes
+  useEffect(() => {
+    if (profile) {
+      setFullName(profile.full_name || "");
+      setBio(profile.bio || "");
+      setNationality(profile.nationality || "");
+      setCity(profile.city || "");
+      setState(profile.state || "");
+      setInterests(profile.interests || "");
+    }
+  }, [profile]);
+
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
@@ -22,6 +56,7 @@ export function ProfilePage() {
     await refreshProfile();
     setSaving(false);
     setSaved(true);
+    setEditing(false);
     setTimeout(() => setSaved(false), 2000);
   };
 
@@ -32,7 +67,8 @@ export function ProfilePage() {
     <div className="page-layout">
       <Navbar />
       <main className="page-main page-main-narrow">
-        <button className="back-btn" onClick={() => navigate("/dashboard")}>← Back</button>
+
+        {/* Profile header */}
         <div className="profile-header">
           <div className="profile-avatar-large">{roleIcon}</div>
           <div>
@@ -41,38 +77,154 @@ export function ProfilePage() {
           </div>
         </div>
 
-        <div className="card profile-form">
-          <h3>Edit Profile</h3>
-          <div className="form-grid">
-            <div className="form-group form-group-full">
-              <label className="form-label">Full name</label>
-              <input className="form-input" value={fullName} onChange={e => setFullName(e.target.value)} />
+        {/* Profile view */}
+        {!editing ? (
+          <div className="card" style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h3 style={{ margin: 0 }}>My Profile</h3>
+              <div style={{ display: "flex", gap: 8 }}>
+                {saved && <span style={{ color: "var(--green)", fontSize: 14, alignSelf: "center" }}>✓ Saved!</span>}
+                <button className="btn-ghost btn-sm" onClick={() => setEditing(true)}>Edit</button>
+                <button className="btn-primary btn-sm" onClick={() => navigate("/dashboard")}>Go to Dashboard →</button>
+              </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">Nationality</label>
-              <input className="form-input" value={nationality} onChange={e => setNationality(e.target.value)} />
+
+            <div className="profile-view-grid">
+              {profile?.bio && (
+                <div className="profile-view-row full">
+                  <span className="profile-view-label">Bio</span>
+                  <span className="profile-view-value">{profile.bio}</span>
+                </div>
+              )}
+              {profile?.nationality && (
+                <div className="profile-view-row">
+                  <span className="profile-view-label">Nationality</span>
+                  <span className="profile-view-value">{profile.nationality}</span>
+                </div>
+              )}
+              {(profile?.city || profile?.state) && (
+                <div className="profile-view-row">
+                  <span className="profile-view-label">Location</span>
+                  <span className="profile-view-value">{[profile.city, profile.state].filter(Boolean).join(", ")}</span>
+                </div>
+              )}
+              {profile?.interests && (
+                <div className="profile-view-row full">
+                  <span className="profile-view-label">Interests</span>
+                  <span className="profile-view-value">{profile.interests}</span>
+                </div>
+              )}
             </div>
-            <div className="form-group">
-              <label className="form-label">City</label>
-              <input className="form-input" value={city} onChange={e => setCity(e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">State</label>
-              <input className="form-input" value={state} onChange={e => setState(e.target.value)} />
-            </div>
-            <div className="form-group form-group-full">
-              <label className="form-label">Bio</label>
-              <textarea className="form-input form-textarea" value={bio} onChange={e => setBio(e.target.value)} rows={3} />
-            </div>
-            <div className="form-group form-group-full">
-              <label className="form-label">Squash interests</label>
-              <input className="form-input" value={interests} onChange={e => setInterests(e.target.value)} />
-            </div>
+
+            {/* Role-specific details */}
+            {profile?.role === "player" && playerProfile && (
+              <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--gray-200)" }}>
+                <div className="profile-view-grid">
+                  {playerProfile.psa_ranking && (
+                    <div className="profile-view-row">
+                      <span className="profile-view-label">PSA Ranking</span>
+                      <span className="profile-view-value">#{playerProfile.psa_ranking}</span>
+                    </div>
+                  )}
+                  {playerProfile.psa_id && (
+                    <div className="profile-view-row">
+                      <span className="profile-view-label">PSA ID</span>
+                      <span className="profile-view-value">{playerProfile.psa_id}</span>
+                    </div>
+                  )}
+                  {playerProfile.home_club && (
+                    <div className="profile-view-row full">
+                      <span className="profile-view-label">Home Club</span>
+                      <span className="profile-view-value">{playerProfile.home_club}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {profile?.role === "host" && hostProfile && (
+              <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--gray-200)" }}>
+                <div className="profile-view-grid">
+                  <div className="profile-view-row">
+                    <span className="profile-view-label">Capacity</span>
+                    <span className="profile-view-value">{hostProfile.capacity} player{hostProfile.capacity !== 1 ? "s" : ""}</span>
+                  </div>
+                  {hostProfile.distance_to_venue_miles != null && (
+                    <div className="profile-view-row">
+                      <span className="profile-view-label">Distance to venue</span>
+                      <span className="profile-view-value">{hostProfile.distance_to_venue_miles} mi</span>
+                    </div>
+                  )}
+                  <div className="profile-view-row full">
+                    <span className="profile-view-label">Offerings</span>
+                    <span className="profile-view-value">
+                      {[
+                        hostProfile.offers_food && "🍳 Meals",
+                        hostProfile.offers_transport && "🚗 Transport",
+                        hostProfile.has_pets && `🐾 Pets${hostProfile.pet_details ? ` (${hostProfile.pet_details})` : ""}`,
+                      ].filter(Boolean).join(" · ") || "None listed"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {profile?.role === "organizer" && organizerProfile && (
+              <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--gray-200)" }}>
+                <div className="profile-view-grid">
+                  <div className="profile-view-row full">
+                    <span className="profile-view-label">Organization</span>
+                    <span className="profile-view-value">{organizerProfile.organization_name}</span>
+                  </div>
+                  {organizerProfile.website && (
+                    <div className="profile-view-row full">
+                      <span className="profile-view-label">Website</span>
+                      <span className="profile-view-value">{organizerProfile.website}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-          <button className="btn-primary" onClick={handleSave} disabled={saving}>
-            {saved ? "✓ Saved!" : saving ? "Saving…" : "Save changes"}
-          </button>
-        </div>
+        ) : (
+          /* Edit form */
+          <div className="card" style={{ marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h3 style={{ margin: 0 }}>Edit Profile</h3>
+              <button className="btn-ghost btn-sm" onClick={() => setEditing(false)}>Cancel</button>
+            </div>
+            <div className="form-grid">
+              <div className="form-group form-group-full">
+                <label className="form-label">Full name</label>
+                <input className="form-input" value={fullName} onChange={e => setFullName(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Nationality</label>
+                <input className="form-input" value={nationality} onChange={e => setNationality(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">City</label>
+                <input className="form-input" value={city} onChange={e => setCity(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">State</label>
+                <input className="form-input" value={state} onChange={e => setState(e.target.value)} />
+              </div>
+              <div className="form-group form-group-full">
+                <label className="form-label">Bio</label>
+                <textarea className="form-input form-textarea" value={bio} onChange={e => setBio(e.target.value)} rows={3} />
+              </div>
+              <div className="form-group form-group-full">
+                <label className="form-label">Squash interests</label>
+                <input className="form-input" value={interests} onChange={e => setInterests(e.target.value)} />
+              </div>
+            </div>
+            <button className="btn-primary" onClick={handleSave} disabled={saving}>
+              {saving ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        )}
+
       </main>
     </div>
   );

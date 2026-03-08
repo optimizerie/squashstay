@@ -29,7 +29,7 @@ export function AuthPage({ mode }: AuthPageProps) {
         setError(err.message);
         setLoginFailed(true);
       } else {
-        navigate("/dashboard");
+        navigate("/profile");
       }
     }
 
