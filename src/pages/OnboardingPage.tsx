@@ -107,10 +107,18 @@ export function OnboardingPage() {
       <div className="onboarding-card">
         <div className="onboarding-header">
           <div className="onboarding-logo">🏸 SquashStay</div>
-          <div className="onboarding-steps">
-            {["role", "profile", "role-details"].map((s, i) => (
-              <div key={s} className={`onboarding-step-dot ${step === s ? "active" : (["role", "profile", "role-details"].indexOf(step) > i ? "done" : "")}`} />
-            ))}
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div className="onboarding-steps">
+              {["role", "profile", "role-details"].map((s, i) => (
+                <div key={s} className={`onboarding-step-dot ${step === s ? "active" : (["role", "profile", "role-details"].indexOf(step) > i ? "done" : "")}`} />
+              ))}
+            </div>
+            <button
+              className="btn-ghost btn-sm"
+              onClick={() => supabase.auth.signOut().then(() => navigate("/"))}
+            >
+              Sign out
+            </button>
           </div>
         </div>
 
