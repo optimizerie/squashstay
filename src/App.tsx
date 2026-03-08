@@ -98,12 +98,15 @@ export default function App() {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setUser(data.session?.user ?? null);
+      if (!data.session?.user) setProfileLoading(false);
       setLoading(false);
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, sess) => {
       setSession(sess);
       setUser(sess?.user ?? null);
+      if (sess?.user) setProfileLoading(true);
+      else setProfileLoading(false);
     });
 
     return () => listener.subscription.unsubscribe();
@@ -111,7 +114,7 @@ export default function App() {
 
   useEffect(() => {
     if (user) refreshProfile(user.id);
-    else { setProfile(null); setOrganizerApproved(null); setProfileLoading(false); }
+    else { setProfile(null); setOrganizerApproved(null); }
   }, [user]);
 
   useEffect(() => {
