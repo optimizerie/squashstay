@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, useRef, createContext, useContext } from "react";
 import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "./lib/supabase";
 import type { Profile } from "./types";
@@ -79,6 +79,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(true);
   const [organizerApproved, setOrganizerApproved] = useState<boolean | null>(null);
+  const postLoginRedirect = useRef(false);
   const [route, setRoute] = useState<Route>(parseRoute());
 
   const refreshProfile = async (userId?: string) => {
@@ -92,6 +93,10 @@ export default function App() {
       .single();
     setProfile(data);
     setProfileLoading(false);
+    if (postLoginRedirect.current) {
+      postLoginRedirect.current = false;
+      navigate(data?.role ? "/profile" : "/onboarding");
+    }
   };
 
   useEffect(() => {
@@ -102,7 +107,8 @@ export default function App() {
       setLoading(false);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, sess) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, sess) => {
+      if (event === "SIGNED_IN") postLoginRedirect.current = true;
       setSession(sess);
       setUser(sess?.user ?? null);
       if (sess?.user) setProfileLoading(true);
