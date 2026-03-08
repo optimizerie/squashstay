@@ -36,7 +36,10 @@ export function LandingPage() {
         </div>
         <div className="hero-visual">
           <div className="court-graphic">
-            <div className="court-lines" />
+            <div className="court-short-line" />
+            <div className="court-half-line" />
+            <div className="court-service-left" />
+            <div className="court-service-right" />
             <div className="court-ball" />
           </div>
         </div>
