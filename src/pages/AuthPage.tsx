@@ -21,7 +21,11 @@ export function AuthPage({ mode }: AuthPageProps) {
 
     if (mode === "signup") {
       const { error: err } = await supabase.auth.signUp({ email, password });
-      if (err) setError(err.message);
+      if (err) setError(
+        err.message.toLowerCase().includes("rate limit")
+          ? "We're getting a lot of sign-ups right now — please try again in a few minutes."
+          : err.message
+      );
       else setSuccess("Account created! Check your email to confirm, then sign in.");
     } else {
       const { error: err } = await supabase.auth.signInWithPassword({ email, password });
