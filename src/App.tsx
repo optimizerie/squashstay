@@ -77,7 +77,7 @@ export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [organizerApproved, setOrganizerApproved] = useState<boolean | null>(null);
   const [route, setRoute] = useState<Route>(parseRoute());
 
@@ -111,7 +111,7 @@ export default function App() {
 
   useEffect(() => {
     if (user) refreshProfile(user.id);
-    else { setProfile(null); setOrganizerApproved(null); }
+    else { setProfile(null); setOrganizerApproved(null); setProfileLoading(false); }
   }, [user]);
 
   useEffect(() => {
