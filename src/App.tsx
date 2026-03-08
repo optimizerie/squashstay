@@ -10,6 +10,7 @@ import { OnboardingPage } from "./pages/OnboardingPage";
 import { PlayerDashboard } from "./pages/PlayerDashboard";
 import { HostDashboard } from "./pages/HostDashboard";
 import { OrganizerDashboard } from "./pages/OrganizerDashboard";
+import { AdminDashboard } from "./pages/AdminDashboard";
 import { TournamentDetailPage } from "./pages/TournamentDetailPage";
 import { AssignmentDetailPage } from "./pages/AssignmentDetailPage";
 import { ProfilePage } from "./pages/ProfilePage";
@@ -21,7 +22,7 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: (userId?: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -41,6 +42,7 @@ type Route =
   | { page: "auth"; mode: "login" | "signup" }
   | { page: "onboarding" }
   | { page: "dashboard" }
+  | { page: "admin" }
   | { page: "tournament"; id: string }
   | { page: "assignment"; id: string }
   | { page: "profile" };
@@ -52,6 +54,7 @@ function parseRoute(): Route {
   if (hash === "/signup") return { page: "auth", mode: "signup" };
   if (hash === "/onboarding") return { page: "onboarding" };
   if (hash === "/dashboard") return { page: "dashboard" };
+  if (hash === "/admin") return { page: "admin" };
   if (hash === "/profile") return { page: "profile" };
   const tmatch = hash.match(/^\/tournament\/(.+)/);
   if (tmatch) return { page: "tournament", id: tmatch[1] };
@@ -72,6 +75,7 @@ export default function App() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [organizerApproved, setOrganizerApproved] = useState<boolean | null>(null);
   const [route, setRoute] = useState<Route>(parseRoute());
 
   const refreshProfile = async (userId?: string) => {
@@ -104,8 +108,17 @@ export default function App() {
 
   useEffect(() => {
     if (user) refreshProfile(user.id);
-    else setProfile(null);
+    else { setProfile(null); setOrganizerApproved(null); }
   }, [user]);
+
+  useEffect(() => {
+    if (profile?.role === "organizer") {
+      supabase.from("organizer_profiles").select("approved").eq("id", profile.id).single()
+        .then(({ data }) => setOrganizerApproved(data?.approved ?? false));
+    } else {
+      setOrganizerApproved(null);
+    }
+  }, [profile]);
 
   useEffect(() => {
     const onHash = () => setRoute(parseRoute());
@@ -138,11 +151,20 @@ export default function App() {
       return <OnboardingPage />;
     }
 
+    if (route.page === "admin") {
+      if (profile.is_admin) return <AdminDashboard />;
+      return <LandingPage />;
+    }
+
     switch (route.page) {
       case "dashboard":
         if (profile.role === "player") return <PlayerDashboard />;
         if (profile.role === "host") return <HostDashboard />;
-        if (profile.role === "organizer") return <OrganizerDashboard />;
+        if (profile.role === "organizer") {
+          if (organizerApproved === null) return <LoadingScreen />;
+          if (!organizerApproved) return <PendingApprovalScreen />;
+          return <OrganizerDashboard />;
+        }
         break;
       case "tournament":
         return <TournamentDetailPage id={route.id} />;
@@ -175,6 +197,29 @@ function LoadingScreen() {
     <div className="loading-screen">
       <div className="loading-logo">🏸</div>
       <div className="loading-spinner" />
+    </div>
+  );
+}
+
+function PendingApprovalScreen() {
+  const { refreshProfile, user } = useAuth();
+  return (
+    <div className="loading-screen">
+      <div className="loading-logo">🏸</div>
+      <div style={{ textAlign: "center", maxWidth: 400, padding: "0 24px" }}>
+        <h2 style={{ marginBottom: 12 }}>Pending Approval</h2>
+        <p style={{ color: "#666", lineHeight: 1.6 }}>
+          Your organizer account is awaiting approval from the SquashStay admin.
+          You'll be able to create and manage tournaments once approved.
+        </p>
+        <button
+          className="btn-ghost btn-sm"
+          style={{ marginTop: 24 }}
+          onClick={() => { if (user) refreshProfile(user.id); }}
+        >
+          Check again
+        </button>
+      </div>
     </div>
   );
 }

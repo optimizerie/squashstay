@@ -88,6 +88,7 @@ export function OnboardingPage() {
       }
 
       await refreshProfile();
+      // Organizers land on dashboard which shows pending screen until approved
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Something went wrong");

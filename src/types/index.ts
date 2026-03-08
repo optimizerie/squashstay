@@ -23,6 +23,7 @@ export interface Profile {
   city?: string;
   state?: string;
   interests?: string;
+  is_admin?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -56,6 +57,7 @@ export interface OrganizerProfile {
   id: string;
   organization_name: string;
   website?: string;
+  approved?: boolean;
   created_at: string;
   // joined
   profile?: Profile;

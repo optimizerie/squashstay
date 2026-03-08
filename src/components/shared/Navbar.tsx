@@ -76,6 +76,11 @@ export function Navbar() {
           )}
         </div>
 
+        {/* Admin link */}
+        {profile?.is_admin && (
+          <button className="btn-ghost btn-sm" onClick={() => navigate("/admin")}>Admin</button>
+        )}
+
         {/* Profile */}
         <button className="navbar-profile-btn" onClick={() => navigate("/profile")}>
           <span className="navbar-role-icon">{roleLabel}</span>
