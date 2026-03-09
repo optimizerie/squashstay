@@ -1,6 +1,25 @@
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
 import { navigate } from "../App";
+import type { Tournament } from "../types";
 
 export function LandingPage() {
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("tournaments")
+      .select("*")
+      .eq("status", "published")
+      .gte("end_date", new Date().toISOString().split("T")[0])
+      .order("start_date", { ascending: true })
+      .limit(6)
+      .then(({ data }) => setTournaments((data as Tournament[]) || []));
+  }, []);
+
+  const fmt = (d: string) =>
+    new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
   return (
     <div className="landing">
       <nav className="landing-nav">
@@ -16,7 +35,7 @@ export function LandingPage() {
 
       <section className="hero">
         <div className="hero-content">
-          <div className="hero-badge">PSA Challenger Circuit</div>
+          <div className="hero-badge">MAC Squash Tournament Series</div>
           <h1 className="hero-title">
             Billeting for<br />
             <span className="hero-accent">Squash Players</span>
@@ -44,6 +63,35 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Upcoming tournaments */}
+      {tournaments.length > 0 && (
+        <section className="landing-tournaments">
+          <h2 className="section-title">Upcoming Tournaments</h2>
+          <div className="tournament-grid">
+            {tournaments.map(t => (
+              <div key={t.id} className="tournament-card">
+                <div className="tournament-card-header">
+                  <span className={`badge badge-${t.status}`}>{t.status}</span>
+                  <span className="tournament-date">
+                    {fmt(t.start_date)} – {fmt(t.end_date)}{new Date(t.end_date).getFullYear() !== new Date().getFullYear() ? `, ${new Date(t.end_date).getFullYear()}` : ""}
+                  </span>
+                </div>
+                <h3 className="tournament-name">{t.name}</h3>
+                <div className="tournament-venue">📍 {t.venue_name}, {t.venue_city}, {t.venue_state}</div>
+                {t.description && (
+                  <p style={{ fontSize: 13, color: "var(--gray-600)", lineHeight: 1.5 }}>{t.description}</p>
+                )}
+                <div className="tournament-card-footer" style={{ display: "flex", gap: 8 }}>
+                  <button className="btn-primary btn-sm" onClick={() => navigate("/signup")}>
+                    Join as host or player →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="roles-section">
         <h2 className="section-title">Who's it for?</h2>
