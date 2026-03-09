@@ -4,7 +4,7 @@ import { useAuth, navigate } from "../App";
 import { Navbar } from "../components/shared/Navbar";
 import type { Tournament, TournamentHostSignup, TournamentPlayerRegistration, Assignment } from "../types";
 
-type OrgTab = "tournaments" | "create" | "manage";
+type OrgTab = "tournaments" | "create" | "manage" | "edit";
 
 export function OrganizerDashboard() {
   const { user } = useAuth();
@@ -26,6 +26,10 @@ export function OrganizerDashboard() {
   });
   const [saving, setSaving] = useState(false);
   const [createError, setCreateError] = useState("");
+
+  // Edit form
+  const [editForm, setEditForm] = useState({ ...form });
+  const [editError, setEditError] = useState("");
 
   // Broadcast
   const [broadcastEmails, setBroadcastEmails] = useState("");
@@ -73,6 +77,38 @@ export function OrganizerDashboard() {
     setSaving(false);
     setActiveTab("tournaments");
   };
+
+  const openEdit = (t: Tournament) => {
+    setEditForm({
+      name: t.name,
+      description: t.description || "",
+      start_date: t.start_date,
+      end_date: t.end_date,
+      venue_name: t.venue_name,
+      venue_address: t.venue_address || "",
+      venue_city: t.venue_city,
+      venue_state: t.venue_state,
+      billeting_start: t.billeting_start,
+      billeting_end: t.billeting_end,
+    });
+    setEditError("");
+    setActiveTab("edit");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedTournament) return;
+    setSaving(true); setEditError("");
+    const { error } = await supabase.from("tournaments").update(editForm).eq("id", selectedTournament.id);
+    if (error) { setEditError(error.message); setSaving(false); return; }
+    await fetchTournaments();
+    const updated = { ...selectedTournament, ...editForm };
+    setSelectedTournament(updated as Tournament);
+    setSaving(false);
+    setActiveTab("manage");
+  };
+
+  const ef = (k: keyof typeof editForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setEditForm(prev => ({ ...prev, [k]: e.target.value }));
 
   const [broadcastResult, setBroadcastResult] = useState<{ sent: number; failed: { email: string; error: string }[] } | null>(null);
 
@@ -152,6 +188,9 @@ export function OrganizerDashboard() {
               Manage: {selectedTournament.name}
             </button>
           )}
+          {selectedTournament && activeTab === "edit" && (
+            <button className="tab active">Edit: {selectedTournament.name}</button>
+          )}
         </div>
 
         {loading ? (
@@ -174,9 +213,14 @@ export function OrganizerDashboard() {
                 </div>
                 <h3 className="tournament-name">{t.name}</h3>
                 <div className="tournament-venue">📍 {t.venue_name}, {t.venue_city}, {t.venue_state}</div>
-                <button className="btn-primary btn-sm" onClick={() => { setSelectedTournament(t); setActiveTab("manage"); }}>
-                  Manage →
-                </button>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button className="btn-ghost btn-sm" onClick={() => { setSelectedTournament(t); openEdit(t); }}>
+                    Edit
+                  </button>
+                  <button className="btn-primary btn-sm" onClick={() => { setSelectedTournament(t); setActiveTab("manage"); }}>
+                    Manage →
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -237,7 +281,10 @@ export function OrganizerDashboard() {
           </div>
         ) : activeTab === "manage" && selectedTournament ? (
           <div className="manage-section">
-            <div className="manage-stats">
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+            <button className="btn-ghost btn-sm" onClick={() => openEdit(selectedTournament)}>✏️ Edit tournament details</button>
+          </div>
+          <div className="manage-stats">
               <div className="stat-card"><div className="stat-num">{hosts.length}</div><div className="stat-label">Hosts signed up</div></div>
               <div className="stat-card"><div className="stat-num">{players.length}</div><div className="stat-label">Players registered</div></div>
               <div className="stat-card"><div className="stat-num">{assignments.length}</div><div className="stat-label">Assignments made</div></div>
@@ -372,6 +419,61 @@ export function OrganizerDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        ) : activeTab === "edit" && selectedTournament ? (
+          <div className="create-form card">
+            <h2>Edit Tournament</h2>
+            {editError && <div className="alert alert-error">{editError}</div>}
+            <div className="form-grid">
+              <div className="form-group form-group-full">
+                <label className="form-label">Tournament name *</label>
+                <input className="form-input" value={editForm.name} onChange={ef("name")} />
+              </div>
+              <div className="form-group form-group-full">
+                <label className="form-label">Description</label>
+                <textarea className="form-input form-textarea" value={editForm.description} onChange={ef("description")} rows={3} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Start date *</label>
+                <input className="form-input" type="date" value={editForm.start_date} onChange={ef("start_date")} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">End date *</label>
+                <input className="form-input" type="date" value={editForm.end_date} min={editForm.start_date} onChange={ef("end_date")} />
+              </div>
+              <div className="form-section-title form-group-full">📍 Venue</div>
+              <div className="form-group form-group-full">
+                <label className="form-label">Venue name *</label>
+                <input className="form-input" value={editForm.venue_name} onChange={ef("venue_name")} />
+              </div>
+              <div className="form-group form-group-full">
+                <label className="form-label">Address</label>
+                <input className="form-input" value={editForm.venue_address} onChange={ef("venue_address")} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">City *</label>
+                <input className="form-input" value={editForm.venue_city} onChange={ef("venue_city")} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">State *</label>
+                <input className="form-input" value={editForm.venue_state} onChange={ef("venue_state")} />
+              </div>
+              <div className="form-section-title form-group-full">🛏 Billeting window</div>
+              <div className="form-group">
+                <label className="form-label">Billeting from *</label>
+                <input className="form-input" type="date" value={editForm.billeting_start} onChange={ef("billeting_start")} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Billeting to *</label>
+                <input className="form-input" type="date" value={editForm.billeting_end} min={editForm.billeting_start} onChange={ef("billeting_end")} />
+              </div>
+            </div>
+            <div className="form-actions">
+              <button className="btn-ghost" onClick={() => setActiveTab("manage")}>Cancel</button>
+              <button className="btn-primary" onClick={handleSaveEdit} disabled={saving || !editForm.name || !editForm.start_date || !editForm.end_date || !editForm.venue_name || !editForm.venue_city || !editForm.venue_state || !editForm.billeting_start || !editForm.billeting_end}>
+                {saving ? "Saving…" : "Save Changes"}
+              </button>
+            </div>
           </div>
         ) : null}
 
