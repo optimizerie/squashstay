@@ -115,6 +115,20 @@ export function AssignmentDetailPage({ id }: { id: string }) {
               </div>
             </div>
 
+            {/* Contact details */}
+            {otherParty?.profile?.phone && (
+              <div className="card" style={{ marginBottom: 16, padding: "16px 20px" }}>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>📞 Contact {otherName}</div>
+                <div style={{ fontSize: 15 }}>{otherParty.profile.phone}</div>
+                {(otherParty.profile.contact_via_text || otherParty.profile.contact_via_whatsapp) && (
+                  <div style={{ marginTop: 6, color: "var(--gray-600)", fontSize: 13 }}>
+                    Prefers:{" "}
+                    {[otherParty.profile.contact_via_text && "💬 Direct text", otherParty.profile.contact_via_whatsapp && "📱 WhatsApp"].filter(Boolean).join(" · ")}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Contact confirmation */}
             <div className={`contact-confirm-panel ${assignment.status === "fully_confirmed" ? "fully-confirmed" : ""}`}>
               {assignment.status === "fully_confirmed" ? (

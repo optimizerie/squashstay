@@ -23,6 +23,9 @@ export interface Profile {
   city?: string;
   state?: string;
   interests?: string;
+  phone?: string;
+  contact_via_text?: boolean;
+  contact_via_whatsapp?: boolean;
   is_admin?: boolean;
   created_at: string;
   updated_at: string;

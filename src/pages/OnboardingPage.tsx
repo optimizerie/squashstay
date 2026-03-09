@@ -19,6 +19,9 @@ export function OnboardingPage() {
   const [state, setState] = useState("");
   const [bio, setBio] = useState("");
   const [interests, setInterests] = useState("");
+  const [phone, setPhone] = useState("");
+  const [contactViaText, setContactViaText] = useState(false);
+  const [contactViaWhatsapp, setContactViaWhatsapp] = useState(false);
 
   // Player fields
   const [psaRanking, setPsaRanking] = useState("");
@@ -54,6 +57,9 @@ export function OnboardingPage() {
         state,
         bio,
         interests,
+        phone: phone || null,
+        contact_via_text: contactViaText,
+        contact_via_whatsapp: contactViaWhatsapp,
       });
       if (profileErr) throw profileErr;
 
@@ -182,6 +188,23 @@ export function OnboardingPage() {
               <div className="form-group form-group-full">
                 <label className="form-label">Squash interests</label>
                 <input className="form-input" value={interests} onChange={e => setInterests(e.target.value)} placeholder="PSA fan, club player, coaching…" />
+              </div>
+              <div className="form-group form-group-full">
+                <label className="form-label">Phone number</label>
+                <input className="form-input" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+1 555 123 4567" />
+              </div>
+              <div className="form-group form-group-full">
+                <label className="form-label">Contact via</label>
+                <div className="checkbox-group">
+                  <label className="checkbox-label">
+                    <input type="checkbox" checked={contactViaText} onChange={e => setContactViaText(e.target.checked)} />
+                    <span>💬 Direct text</span>
+                  </label>
+                  <label className="checkbox-label">
+                    <input type="checkbox" checked={contactViaWhatsapp} onChange={e => setContactViaWhatsapp(e.target.checked)} />
+                    <span>📱 WhatsApp</span>
+                  </label>
+                </div>
               </div>
             </div>
             <div className="onboarding-nav">

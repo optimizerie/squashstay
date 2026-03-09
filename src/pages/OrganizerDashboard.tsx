@@ -288,6 +288,16 @@ export function OrganizerDashboard() {
                             {player?.profile?.nationality} · PSA #{player?.psa_ranking || "—"}
                             {player?.home_club && ` · ${player.home_club}`}
                           </div>
+                          {player?.profile?.phone && (
+                            <div className="person-phone">
+                              📞 {player.profile.phone}
+                              {(player.profile.contact_via_text || player.profile.contact_via_whatsapp) && (
+                                <span style={{ color: "var(--gray-400)", marginLeft: 6 }}>
+                                  ({[player.profile.contact_via_text && "text", player.profile.contact_via_whatsapp && "WhatsApp"].filter(Boolean).join(" · ")})
+                                </span>
+                              )}
+                            </div>
+                          )}
                           {p.special_requests && <div className="person-notes">{p.special_requests}</div>}
                         </div>
                       </div>
@@ -321,6 +331,16 @@ export function OrganizerDashboard() {
                             Capacity: {assignedCount}/{host?.capacity} ·
                             {host?.distance_to_venue_miles && ` ${host.distance_to_venue_miles}mi from venue`}
                           </div>
+                          {host?.profile?.phone && (
+                            <div className="person-phone">
+                              📞 {host.profile.phone}
+                              {(host.profile.contact_via_text || host.profile.contact_via_whatsapp) && (
+                                <span style={{ color: "var(--gray-400)", marginLeft: 6 }}>
+                                  ({[host.profile.contact_via_text && "text", host.profile.contact_via_whatsapp && "WhatsApp"].filter(Boolean).join(" · ")})
+                                </span>
+                              )}
+                            </div>
+                          )}
                           <div className="host-offerings">
                             {host?.offers_food && <span className="offer-tag">🍳 Food</span>}
                             {host?.offers_transport && <span className="offer-tag">🚗 Transport</span>}

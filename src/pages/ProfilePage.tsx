@@ -20,6 +20,9 @@ export function ProfilePage() {
   const [city, setCity] = useState(profile?.city || "");
   const [state, setState] = useState(profile?.state || "");
   const [interests, setInterests] = useState(profile?.interests || "");
+  const [phone, setPhone] = useState(profile?.phone || "");
+  const [contactViaText, setContactViaText] = useState(profile?.contact_via_text || false);
+  const [contactViaWhatsapp, setContactViaWhatsapp] = useState(profile?.contact_via_whatsapp || false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -46,13 +49,16 @@ export function ProfilePage() {
       setCity(profile.city || "");
       setState(profile.state || "");
       setInterests(profile.interests || "");
+      setPhone(profile.phone || "");
+      setContactViaText(profile.contact_via_text || false);
+      setContactViaWhatsapp(profile.contact_via_whatsapp || false);
     }
   }, [profile]);
 
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    await supabase.from("profiles").update({ full_name: fullName, bio, nationality, city, state, interests }).eq("id", user.id);
+    await supabase.from("profiles").update({ full_name: fullName, bio, nationality, city, state, interests, phone: phone || null, contact_via_text: contactViaText, contact_via_whatsapp: contactViaWhatsapp }).eq("id", user.id);
     await refreshProfile();
     setSaving(false);
     setSaved(true);
@@ -112,6 +118,20 @@ export function ProfilePage() {
                 <div className="profile-view-row full">
                   <span className="profile-view-label">Interests</span>
                   <span className="profile-view-value">{profile.interests}</span>
+                </div>
+              )}
+              {profile?.phone && (
+                <div className="profile-view-row">
+                  <span className="profile-view-label">Phone</span>
+                  <span className="profile-view-value">{profile.phone}</span>
+                </div>
+              )}
+              {(profile?.contact_via_text || profile?.contact_via_whatsapp) && (
+                <div className="profile-view-row">
+                  <span className="profile-view-label">Contact via</span>
+                  <span className="profile-view-value">
+                    {[profile.contact_via_text && "💬 Direct text", profile.contact_via_whatsapp && "📱 WhatsApp"].filter(Boolean).join(" · ")}
+                  </span>
                 </div>
               )}
             </div>
@@ -217,6 +237,23 @@ export function ProfilePage() {
               <div className="form-group form-group-full">
                 <label className="form-label">Squash interests</label>
                 <input className="form-input" value={interests} onChange={e => setInterests(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Phone number</label>
+                <input className="form-input" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+1 555 123 4567" />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Contact via</label>
+                <div className="checkbox-group">
+                  <label className="checkbox-label">
+                    <input type="checkbox" checked={contactViaText} onChange={e => setContactViaText(e.target.checked)} />
+                    <span>💬 Direct text</span>
+                  </label>
+                  <label className="checkbox-label">
+                    <input type="checkbox" checked={contactViaWhatsapp} onChange={e => setContactViaWhatsapp(e.target.checked)} />
+                    <span>📱 WhatsApp</span>
+                  </label>
+                </div>
               </div>
             </div>
             <button className="btn-primary" onClick={handleSave} disabled={saving}>
